@@ -330,15 +330,16 @@
           }
           graphs.forEach(g => {
             const opt = document.createElement("option");
+            const displayName = g.name || (g.path ? g.path.split('/').filter(p => p && p !== 'graphify-out' && p !== 'graph.json').pop() : 'Default');
             opt.value = g.name || g.path;
-            opt.textContent = `${g.name} (${g.nodes || 0} nodes)`;
+            opt.textContent = `${displayName} (${g.nodes || 0} nodes)`;
             if (g.is_default || (!currentProject && opt.value)) {
               opt.selected = true;
               currentProject = opt.value;
             }
             sel.appendChild(opt);
           });
-          onProjectChange(currentProject || graphs[0].name);
+          onProjectChange(currentProject || graphs[0].name || graphs[0].path);
         }
       } catch (err) {
         console.error(err);
