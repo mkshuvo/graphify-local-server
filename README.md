@@ -150,3 +150,9 @@ graphify-local-server/
 │   └── graphify_mcp.py         # Zero-dependency Python stdlib MCP stdio bridge
 └── data/                       # Persistent knowledge graph storage
 ```
+
+---
+
+## 📄 License
+
+This project is open-source and licensed under the [MIT License](LICENSE).
