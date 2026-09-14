@@ -1,0 +1,23 @@
+services:
+  graphify-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: graphify-local-server
+    restart: unless-stopped
+    ports:
+      - "${PORT:-28848}:28848"
+    environment:
+      - PORT=28848
+      - GRAPHIFY_DATA_DIR=/app/data
+      - GRAPHIFY_STATIC_DIR=/app/static
+      - HOST_USER_HOME=/host_users/mohsin
+    volumes:
+      - ./data:/app/data
+      - /Users/mohsin:/host_users/mohsin:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:28848/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
