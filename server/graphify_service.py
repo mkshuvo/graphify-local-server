@@ -86,9 +86,10 @@ class GraphifyService:
             # Export html dynamically
             try:
                 subprocess.run(
-                    ["graphify", "export", "html", "--graph", str(graph_file)],
+                    ["graphify", "export", "html", "--graph", str(graph_file), "--node-limit", "50000"],
                     capture_output=True,
                     text=True,
+                    env={**os.environ, "GRAPHIFY_VIZ_NODE_LIMIT": "50000"},
                 )
             except Exception as e:
                 logger.error(f"Error exporting graph.html: {e}")
@@ -400,9 +401,10 @@ class GraphifyService:
             # Automatically export interactive graph.html
             try:
                 subprocess.run(
-                    ["graphify", "export", "html", "--graph", str(graph_file)],
+                    ["graphify", "export", "html", "--graph", str(graph_file), "--node-limit", "50000"],
                     capture_output=True,
                     text=True,
+                    env={**os.environ, "GRAPHIFY_VIZ_NODE_LIMIT": "50000"},
                 )
             except Exception as e:
                 logger.warning(f"Could not auto-generate graph.html: {e}")

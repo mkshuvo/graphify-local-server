@@ -12,6 +12,7 @@ services:
       - GRAPHIFY_DATA_DIR=/app/data
       - GRAPHIFY_STATIC_DIR=/app/static
       - HOST_USER_HOME=/host_users/mohsin
+      - GRAPHIFY_VIZ_NODE_LIMIT=50000
     volumes:
       - ./data:/app/data
       - ./server:/app/server
