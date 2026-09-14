@@ -14,6 +14,8 @@ services:
       - HOST_USER_HOME=/host_users/mohsin
     volumes:
       - ./data:/app/data
+      - ./server:/app/server
+      - ./static:/app/static
       - /Users/mohsin:/host_users/mohsin:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:28848/health"]
