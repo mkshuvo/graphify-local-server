@@ -11,13 +11,12 @@ services:
       - PORT=28848
       - GRAPHIFY_DATA_DIR=/app/data
       - GRAPHIFY_STATIC_DIR=/app/static
-      - HOST_USER_HOME=/host_users/mohsin
       - GRAPHIFY_VIZ_NODE_LIMIT=50000
     volumes:
       - ./data:/app/data
       - ./server:/app/server
       - ./static:/app/static
-      - /Users/mohsin:/host_users/mohsin:ro
+      - ${HOST_WORKSPACE_DIR:-./workspaces}:/app/workspaces
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:28848/health"]
       interval: 15s

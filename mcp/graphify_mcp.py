@@ -3,7 +3,7 @@
 Graphify MCP Server (Pure Python Standard Library)
 Zero external host dependencies required.
 Communicates with any MCP client (Antigravity, Claude Code, Cursor, Windsurf, Codex, etc.)
-via JSON-RPC 2.0 over stdio and forwards tool calls to the local Graphify Docker server at http://localhost:28848.
+via JSON-RPC 2.0 over stdio and forwards tool calls to the local Graphify server at http://localhost:28848.
 """
 
 import sys
@@ -13,7 +13,17 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
+# Ensure UTF-8 stdio encoding across all platforms (especially Windows)
+if hasattr(sys.stdin, "reconfigure"):
+    try:
+        sys.stdin.reconfigure(encoding="utf-8")
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 GRAPHIFY_SERVER_URL = os.getenv("GRAPHIFY_SERVER_URL", "http://localhost:28848").rstrip("/")
+GRAPHIFY_API_KEY = os.getenv("GRAPHIFY_API_KEY", "").strip()
 
 TOOLS = [
     {
@@ -194,6 +204,107 @@ TOOLS = [
             },
             "required": ["path"]
         }
+    },
+    {
+        "name": "graphify_blast_radius",
+        "description": "Calculate all transitive downstream dependents, files, and tests that could break if a symbol is modified.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "symbol": {
+                    "type": "string",
+                    "description": "Target function, class, or symbol name"
+                },
+                "max_depth": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Downstream traversal depth (1-6)"
+                },
+                "project_path": {
+                    "type": "string",
+                    "description": "Optional: Project directory path"
+                }
+            },
+            "required": ["symbol"]
+        }
+    },
+    {
+        "name": "graphify_call_flow",
+        "description": "Trace execution call chains from an entrypoint and output a Mermaid sequence/flowchart.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "symbol": {
+                    "type": "string",
+                    "description": "Entrypoint function or class name"
+                },
+                "max_depth": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Call chain depth (1-6)"
+                },
+                "project_path": {
+                    "type": "string",
+                    "description": "Optional: Project directory path"
+                }
+            },
+            "required": ["symbol"]
+        }
+    },
+    {
+        "name": "graphify_dead_code",
+        "description": "Find orphan functions, unreferenced classes, and potential dead code with in-degree 0 in the project.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project_path": {
+                    "type": "string",
+                    "description": "Optional: Project directory path"
+                }
+            }
+        }
+    },
+    {
+        "name": "graphify_context_bundle",
+        "description": "Extract a token-capped sub-graph context package tailored for LLM prompt injection.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "symbols": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of core symbol names to include"
+                },
+                "token_budget": {
+                    "type": "integer",
+                    "default": 4000,
+                    "description": "Maximum token budget for output bundle"
+                },
+                "project_path": {
+                    "type": "string",
+                    "description": "Optional: Project directory path"
+                }
+            },
+            "required": ["symbols"]
+        }
+    },
+    {
+        "name": "graphify_cypher",
+        "description": "Execute an openCypher query directly against the embedded KùzuDB graph for advanced multi-hop queries.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Cypher query string (e.g. 'MATCH (c:CodeNode) RETURN c.label LIMIT 10')"
+                },
+                "project_path": {
+                    "type": "string",
+                    "description": "Optional: Project directory path"
+                }
+            },
+            "required": ["query"]
+        }
     }
 ]
 
@@ -202,6 +313,9 @@ def http_request(path, method="GET", body=None, timeout=30):
     url = f"{GRAPHIFY_SERVER_URL}{path}"
     data = None
     headers = {"Accept": "application/json"}
+    if GRAPHIFY_API_KEY:
+        headers["Authorization"] = f"Bearer {GRAPHIFY_API_KEY}"
+        headers["X-API-Key"] = GRAPHIFY_API_KEY
     if body is not None:
         data = json.dumps(body).encode("utf-8")
         headers["Content-Type"] = "application/json"
@@ -343,6 +457,79 @@ def handle_tool_call(tool_name, arguments):
                 timeout=300
             )
             return json.dumps(res, indent=2)
+
+        elif tool_name == "graphify_blast_radius":
+            params = {
+                "symbol": arguments.get("symbol"),
+                "max_depth": arguments.get("max_depth", 3),
+            }
+            if arguments.get("project_path"):
+                params["project_path"] = arguments.get("project_path")
+            qs = urllib.parse.urlencode(params)
+            res = http_request(f"/api/blast-radius?{qs}", method="GET")
+            lines = [
+                f"Blast Radius Impact Analysis for '{res.get('target', {}).get('label')}':",
+                f"  Risk Level: {res.get('risk_level')}",
+                f"  Total Dependents Affected: {res.get('total_dependents_affected')}",
+                f"  Affected Files: {res.get('affected_files_count')}",
+            ]
+            if res.get("affected_tests"):
+                lines.append(f"  Affected Tests: {', '.join(res.get('affected_tests'))}")
+            for hop, items in res.get("impact_by_depth", {}).items():
+                lines.append(f"  {hop}: {len(items)} callers/dependents")
+                for it in items[:5]:
+                    lines.append(f"    - {it.get('label')} ({it.get('file')})")
+            return "\n".join(lines)
+
+        elif tool_name == "graphify_call_flow":
+            params = {
+                "symbol": arguments.get("symbol"),
+                "max_depth": arguments.get("max_depth", 3),
+            }
+            if arguments.get("project_path"):
+                params["project_path"] = arguments.get("project_path")
+            qs = urllib.parse.urlencode(params)
+            res = http_request(f"/api/callflow?{qs}", method="GET")
+            return res.get("mermaid", json.dumps(res, indent=2))
+
+        elif tool_name == "graphify_dead_code":
+            params = {}
+            if arguments.get("project_path"):
+                params["project_path"] = arguments.get("project_path")
+            qs = urllib.parse.urlencode(params)
+            endpoint = f"/api/dead-code?{qs}" if qs else "/api/dead-code"
+            res = http_request(endpoint, method="GET")
+            orphans = res.get("orphans", [])
+            lines = [f"Found {res.get('total_orphans_found', len(orphans))} unreferenced orphan symbols:"]
+            for o in orphans[:25]:
+                lines.append(f"  - {o.get('label')} ({o.get('file')})")
+            return "\n".join(lines)
+
+        elif tool_name == "graphify_context_bundle":
+            res = http_request(
+                "/api/context-bundle",
+                method="POST",
+                body={
+                    "symbols": arguments.get("symbols", []),
+                    "token_budget": arguments.get("token_budget", 4000),
+                    "project_path": arguments.get("project_path"),
+                }
+            )
+            return res.get("bundle", json.dumps(res, indent=2))
+
+        elif tool_name == "graphify_cypher":
+            res = http_request(
+                "/api/cypher",
+                method="POST",
+                body={
+                    "query": arguments.get("query"),
+                    "project_path": arguments.get("project_path"),
+                }
+            )
+            rows = res.get("rows", [])
+            if not rows:
+                return f"Cypher query executed successfully. (0 rows returned)"
+            return json.dumps(rows, indent=2)
 
         else:
             raise ValueError(f"Unknown tool: {tool_name}")

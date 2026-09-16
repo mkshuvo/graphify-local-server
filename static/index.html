@@ -3,24 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Graphify Knowledge Graph Server</title>
+  <title>Graphify 2.0 &bull; Knowledge Graph & Agentic Engine</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --border: #334155;
-      --text: #f8fafc;
+      --bg: #0b0f19;
+      --card-bg: #131b2e;
+      --card-inner: #1a243d;
+      --border: #233152;
+      --text: #f1f5f9;
       --text-muted: #94a3b8;
       --accent: #6366f1;
       --accent-hover: #4f46e5;
       --success: #10b981;
       --warning: #f59e0b;
-      --tag-bg: #2d3748;
+      --danger: #ef4444;
+      --cyan: #06b6d4;
+      --tag-bg: #1e293b;
     }
     [data-theme="light"] {
       --bg: #f8fafc;
       --card-bg: #ffffff;
+      --card-inner: #f1f5f9;
       --border: #e2e8f0;
       --text: #0f172a;
       --text-muted: #64748b;
@@ -28,7 +32,9 @@
       --accent-hover: #4338ca;
       --success: #059669;
       --warning: #d97706;
-      --tag-bg: #edf2f7;
+      --danger: #dc2626;
+      --cyan: #0891b2;
+      --tag-bg: #e2e8f0;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -36,66 +42,141 @@
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
-      padding: 24px;
+      padding: 20px;
       transition: background 0.2s, color 0.2s;
     }
-    .container { max-width: 1280px; margin: 0 auto; }
+    .container { max-width: 1360px; margin: 0 auto; }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       padding-bottom: 16px;
       border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 12px;
     }
     .logo-area { display: flex; align-items: center; gap: 12px; }
     .logo-badge {
       background: linear-gradient(135deg, #6366f1, #a855f7);
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 22px;
       color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
     }
-    h1 { font-size: 1.5rem; font-weight: 700; }
-    .header-actions { display: flex; gap: 12px; align-items: center; }
+    h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+    .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .project-selector {
       background: var(--card-bg);
       border: 1px solid var(--border);
       color: var(--text);
       padding: 8px 12px;
       border-radius: 8px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       cursor: pointer;
       font-weight: 500;
-      min-width: 180px;
+      min-width: 200px;
     }
-    .theme-toggle {
+    .theme-toggle, .btn-icon {
       background: var(--card-bg);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 8px 14px;
+      padding: 8px 12px;
       border-radius: 8px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
     }
     .btn-visualizer-top {
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: white;
       text-decoration: none;
-      padding: 8px 16px;
+      padding: 8px 14px;
       border-radius: 8px;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       display: flex;
       align-items: center;
       gap: 6px;
       transition: opacity 0.2s;
     }
     .btn-visualizer-top:hover { opacity: 0.9; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--tag-bg);
+    }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-cloud { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .badge-kuzu { background: rgba(6, 182, 212, 0.15); color: #67e8f9; border: 1px solid rgba(6, 182, 212, 0.3); }
+
+    /* Visualizer Tabs Container */
+    .vis-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    .vis-tab-bar {
+      display: flex;
+      background: var(--card-inner);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 12px 0 12px;
+      gap: 6px;
+      align-items: center;
+    }
+    .vis-tab {
+      padding: 10px 18px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .vis-tab.active {
+      background: var(--card-bg);
+      color: var(--accent);
+      border-top: 2px solid var(--accent);
+    }
+    .vis-tab:hover:not(.active) {
+      color: var(--text);
+      background: rgba(255,255,255,0.03);
+    }
+    .vis-tab-spacer { flex: 1; }
+    .visualizer-frame {
+      width: 100%;
+      height: 560px;
+      border: none;
+      background: #000;
+      display: block;
+    }
+
+    /* Grid Layout for Agentic Tools */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -103,71 +184,120 @@
       padding: 20px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
-    .card h2 { font-size: 1.1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--accent); }
-    .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-    .stat-label { color: var(--text-muted); }
-    .stat-val { font-weight: 600; font-family: monospace; }
+    .card h2 {
+      font-size: 1.05rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .stat-label { color: var(--text-muted); font-size: 0.85rem; }
+    .stat-val { font-weight: 600; font-family: monospace; font-size: 0.9rem; }
     input, select, textarea {
       width: 100%;
-      padding: 10px 12px;
+      padding: 9px 12px;
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text);
-      margin-bottom: 12px;
-      font-size: 0.95rem;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+    textarea {
+      font-family: monospace;
+      resize: vertical;
     }
     button.btn-primary {
       background: var(--accent);
       color: white;
       border: none;
-      padding: 10px 18px;
+      padding: 9px 16px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 0.85rem;
       width: 100%;
       transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
     button.btn-primary:hover { background: var(--accent-hover); }
     .result-box {
-      margin-top: 14px;
+      margin-top: 12px;
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 14px;
+      padding: 12px;
       font-family: monospace;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       white-space: pre-wrap;
-      max-height: 280px;
+      max-height: 250px;
       overflow-y: auto;
+      color: var(--text);
     }
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: var(--tag-bg);
-    }
-    .badge-success { background: #064e3b; color: #6ee7b7; }
     .code-block {
       background: var(--bg);
       padding: 12px;
       border-radius: 8px;
       font-family: monospace;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       overflow-x: auto;
       border: 1px solid var(--border);
+      position: relative;
     }
-    .visualizer-card {
-      margin-bottom: 24px;
-    }
-    .visualizer-frame {
-      width: 100%;
-      height: 520px;
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: var(--card-inner);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #000;
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    .copy-btn:hover { color: var(--text); }
+    .config-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .cfg-tab {
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+    .cfg-tab.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .tag-bubble {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      margin-right: 4px;
+      margin-bottom: 4px;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
     }
   </style>
 </head>
@@ -175,37 +305,53 @@
   <div class="container">
     <header>
       <div class="logo-area">
-        <div class="logo-badge"><i class="fa-solid fa-diagram-project"></i></div>
+        <div class="logo-badge"><i class="fa-solid fa-brain"></i></div>
         <div>
-          <h1>Graphify Knowledge Graph Server</h1>
-          <p style="color: var(--text-muted); font-size: 0.85rem;">Local Multi-Agent Knowledge Graph & MCP Engine (Port 28848)</p>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h1>Graphify 2.0</h1>
+            <span class="badge badge-kuzu"><i class="fa-solid fa-bolt"></i> KùzuDB Enabled</span>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.8rem;">Deterministic Multi-Agent Knowledge Graph & Architectural AST Engine (Port 28848)</p>
         </div>
       </div>
       <div class="header-actions">
         <select id="project-dropdown" class="project-selector" onchange="onProjectChange(this.value)">
           <option value="">Loading Projects...</option>
         </select>
+        <span class="badge badge-success" id="security-badge"><i class="fa-solid fa-shield-halved"></i> Local Dev</span>
+        <span class="badge badge-success" id="server-status"><i class="fa-solid fa-circle" style="font-size: 7px;"></i> Online</span>
         <a id="open-visualizer-btn" href="/visualizer" target="_blank" class="btn-visualizer-top">
-          <i class="fa-solid fa-expand"></i> Fullscreen Graph
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Fullscreen
         </a>
-        <span class="badge badge-success" id="server-status"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> Online</span>
         <button class="theme-toggle" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
       </div>
     </header>
 
-    <!-- Embedded Interactive Visualizer Section -->
-    <div class="card visualizer-card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <h2 style="margin-bottom: 0;"><i class="fa-solid fa-circle-nodes"></i> Interactive Knowledge Graph (D3 Force-Directed)</h2>
-        <span style="font-size: 0.8rem; color: var(--text-muted);">Click nodes to inspect &bull; Drag to rearrange &bull; Scroll to zoom</span>
+    <!-- Multi-Tab Visualizer Experience -->
+    <div class="vis-container">
+      <div class="vis-tab-bar">
+        <div class="vis-tab active" id="tab-btn-force" onclick="switchVisTab('force')">
+          <i class="fa-solid fa-circle-nodes"></i> Force Graph (D3 2D)
+        </div>
+        <div class="vis-tab" id="tab-btn-tree" onclick="switchVisTab('tree')">
+          <i class="fa-solid fa-network-wired"></i> Architecture Tree (D3)
+        </div>
+        <div class="vis-tab" id="tab-btn-callflow" onclick="switchVisTab('callflow')">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i> Call-Flow (Mermaid)
+        </div>
+        <div class="vis-tab-spacer"></div>
+        <span style="font-size: 0.75rem; color: var(--text-muted); padding-right: 8px;">
+          <i class="fa-solid fa-mouse-pointer"></i> Interactive: Drag &bull; Zoom &bull; Click Nodes
+        </span>
       </div>
       <iframe id="graph-iframe" class="visualizer-frame" src="/visualizer"></iframe>
     </div>
 
+    <!-- Agentic Tools Grid -->
     <div class="grid">
-      <!-- Stats & Status -->
+      <!-- 1. Graph Overview & Engine Stats -->
       <div class="card">
-        <h2><i class="fa-solid fa-chart-pie"></i> Graph Overview</h2>
+        <h2><i class="fa-solid fa-chart-pie"></i> Graph Overview & Engine</h2>
         <div class="stat-row">
           <span class="stat-label">Total Nodes</span>
           <span class="stat-val" id="stat-nodes">--</span>
@@ -215,105 +361,238 @@
           <span class="stat-val" id="stat-edges">--</span>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Communities</span>
+          <span class="stat-label">Louvain Communities</span>
           <span class="stat-val" id="stat-communities">--</span>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Confidence</span>
+          <span class="stat-label">Extraction Confidence</span>
           <span class="stat-val" id="stat-confidence">--</span>
         </div>
         <div class="stat-row">
-          <span class="stat-label">Graph File</span>
-          <span class="stat-val" id="stat-graph-path" style="font-size: 0.72rem; word-break: break-all;">None</span>
+          <span class="stat-label">Storage Engine</span>
+          <span class="stat-val" style="color: var(--cyan);">KùzuDB (Disk-Mapped)</span>
         </div>
-        <button class="btn-primary" style="margin-top: 10px;" onclick="loadProjects()"><i class="fa-solid fa-arrows-rotate"></i> Refresh Overview</button>
+        <div class="stat-row">
+          <span class="stat-label">Graph File</span>
+          <span class="stat-val" id="stat-graph-path" style="font-size: 0.7rem; word-break: break-all;">None</span>
+        </div>
+        <button class="btn-primary" style="margin-top: 6px;" onclick="loadProjects()">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh Graph Status
+        </button>
       </div>
 
-      <!-- Query Knowledge Graph -->
+      <!-- 2. Agentic Blast Radius Simulator -->
       <div class="card">
-        <h2><i class="fa-solid fa-magnifying-glass"></i> Query Knowledge Graph</h2>
-        <input type="text" id="query-input" placeholder="e.g. What services handle validation?">
-        <div style="display: flex; gap: 10px;">
-          <select id="query-mode" style="width: 50%;">
+        <h2><i class="fa-solid fa-burst"></i> Blast Radius Simulator</h2>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">
+          Simulate what breaks before editing code. Traces callers, downstream dependencies, and impacted tests.
+        </p>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="blast-symbol" placeholder="e.g. GraphifyService or search" style="flex: 2;">
+          <input type="number" id="blast-depth" value="3" min="1" max="6" title="Downstream Depth" style="flex: 1;">
+        </div>
+        <button class="btn-primary" onclick="runBlastRadius()">
+          <i class="fa-solid fa-calculator"></i> Calculate Blast Radius
+        </button>
+        <div class="result-box" id="blast-result">Blast radius analysis will appear here...</div>
+      </div>
+
+      <!-- 3. Query Knowledge Graph (BFS / DFS) -->
+      <div class="card">
+        <h2><i class="fa-solid fa-magnifying-glass"></i> Natural Language Query</h2>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">
+          Deterministic BFS (broad architecture) or DFS (execution path) traversal for LLMs.
+        </p>
+        <input type="text" id="query-input" placeholder="e.g. What services handle graph persistence?">
+        <div style="display: flex; gap: 8px;">
+          <select id="query-mode" style="flex: 1;">
             <option value="bfs">BFS (Broad Context)</option>
             <option value="dfs">DFS (Path Trace)</option>
           </select>
-          <input type="number" id="query-budget" value="2000" min="500" max="5000" placeholder="Token Budget" style="width: 50%;">
+          <input type="number" id="query-budget" value="2000" min="500" max="5000" placeholder="Token Budget" style="flex: 1;">
         </div>
-        <button class="btn-primary" onclick="runQuery()"><i class="fa-solid fa-play"></i> Run Query</button>
+        <button class="btn-primary" onclick="runQuery()">
+          <i class="fa-solid fa-play"></i> Run Agent Query
+        </button>
         <div class="result-box" id="query-result">Query results will appear here...</div>
       </div>
 
-      <!-- Shortest Path -->
+      <!-- 4. Dead Code & Orphan Detector -->
       <div class="card">
-        <h2><i class="fa-solid fa-route"></i> Shortest Path</h2>
-        <input type="text" id="path-source" placeholder="Source Concept (e.g. CommunityService)">
-        <input type="text" id="path-target" placeholder="Target Concept (e.g. Context)">
-        <button class="btn-primary" onclick="runPath()"><i class="fa-solid fa-shoe-prints"></i> Find Shortest Path</button>
-        <div class="result-box" id="path-result">Path trace will appear here...</div>
+        <h2><i class="fa-solid fa-broom"></i> Dead Code & Orphan Detector</h2>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">
+          Detects functions and classes with in-degree 0 (no incoming references across the entire codebase).
+        </p>
+        <button class="btn-primary" onclick="runDeadCode()">
+          <i class="fa-solid fa-stethoscope"></i> Audit Dead Code
+        </button>
+        <div class="result-box" id="deadcode-result">Click Audit to scan codebase for unreferenced symbols...</div>
       </div>
 
-      <!-- Index Codebase -->
+      <!-- 5. KùzuDB openCypher Query Console -->
       <div class="card">
-        <h2><i class="fa-solid fa-folder-tree"></i> Index Any Codebase</h2>
-        <input type="text" id="build-path" placeholder="/Users/mohsin/fn/fieldnation/modules/Community">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <h2><i class="fa-solid fa-terminal"></i> openCypher Query Console</h2>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">
+          Execute direct Cypher graph queries against KùzuDB's ultra-fast embedded disk engine.
+        </p>
+        <textarea id="cypher-input" rows="3" placeholder="MATCH (c:CodeNode) RETURN c.label, c.file_type LIMIT 10">MATCH (c:CodeNode) RETURN c.label, c.file_type, c.community LIMIT 15</textarea>
+        <button class="btn-primary" onclick="runCypher()">
+          <i class="fa-solid fa-bolt"></i> Execute Cypher
+        </button>
+        <div class="result-box" id="cypher-result">Query results will appear here...</div>
+      </div>
+
+      <!-- 6. Index & Re-build Any Codebase -->
+      <div class="card">
+        <h2><i class="fa-solid fa-folder-tree"></i> Index Local Repository</h2>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">
+          AST tree-sitter extraction with Louvain community detection and KùzuDB sync.
+        </p>
+        <input type="text" id="build-path" placeholder="C:\path\to\your\project or /home/user/repo">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
           <input type="checkbox" id="build-force" style="width: auto; margin-bottom: 0;">
-          <label for="build-force" style="font-size: 0.85rem; color: var(--text-muted);">Force full re-index</label>
+          <label for="build-force" style="font-size: 0.8rem; color: var(--text-muted);">Force full clean re-index</label>
         </div>
-        <button class="btn-primary" onclick="runBuild()"><i class="fa-solid fa-hammer"></i> Build Knowledge Graph</button>
-        <div class="result-box" id="build-result">Build output will appear here...</div>
+        <button class="btn-primary" onclick="runBuild()">
+          <i class="fa-solid fa-hammer"></i> Build Knowledge Graph
+        </button>
+        <div class="result-box" id="build-result">Build status will appear here...</div>
       </div>
     </div>
 
-    <!-- Agent MCP Integration Snippets -->
+    <!-- Multi-Agent MCP Integration Configs -->
     <div class="card" style="margin-bottom: 24px;">
-      <h2><i class="fa-solid fa-robot"></i> Multi-Agent MCP Integration Configs</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
-        Add this configuration snippet to connect any AI coding agent to this local Graphify server:
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+        <h2><i class="fa-solid fa-robot"></i> Multi-Agent MCP Client Configurations</h2>
+        <div class="config-tabs">
+          <div class="cfg-tab active" onclick="switchConfigTab('antigravity')">Antigravity</div>
+          <div class="cfg-tab" onclick="switchConfigTab('claude')">Claude Desktop</div>
+          <div class="cfg-tab" onclick="switchConfigTab('cursor')">Cursor / Windsurf</div>
+          <div class="cfg-tab" onclick="switchConfigTab('cloud')">Remote Cloud / Docker</div>
+        </div>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 12px;">
+        Copy and paste the configuration into your agent's MCP settings to enable zero-token-waste graph lookups.
       </p>
 
-      <h3 style="font-size: 0.95rem; margin-bottom: 6px; color: var(--text);"><i class="fa-solid fa-gear"></i> Antigravity (~/.gemini/config/mcp_config.json)</h3>
-      <div class="code-block" style="margin-bottom: 16px;">
-{
-  "mcpServers": {
-    "graphify": {
-      "command": "/opt/homebrew/bin/python3",
-      "args": [
-        "/Users/mohsin/.local-mcp/graphify-local-server/mcp/graphify_mcp.py"
-      ],
-      "env": {
-        "GRAPHIFY_SERVER_URL": "http://localhost:28848"
-      }
-    }
-  }
-}</div>
-
-      <h3 style="font-size: 0.95rem; margin-bottom: 6px; color: var(--text);"><i class="fa-solid fa-terminal"></i> Claude Desktop / Claude Code / Cursor / Windsurf / Codex</h3>
       <div class="code-block">
-{
-  "mcpServers": {
-    "graphify": {
-      "command": "python3",
-      "args": [
-        "/Users/mohsin/.local-mcp/graphify-local-server/mcp/graphify_mcp.py"
-      ],
-      "env": {
-        "GRAPHIFY_SERVER_URL": "http://localhost:28848"
-      }
-    }
-  }
-}</div>
+        <button class="copy-btn" onclick="copyConfig()"><i class="fa-solid fa-copy"></i> Copy</button>
+        <pre id="mcp-config-display" style="white-space: pre-wrap; font-family: monospace;"></pre>
+      </div>
     </div>
   </div>
 
   <script>
     let currentProject = "";
+    let activeVisTab = "force";
+    let activeConfig = "antigravity";
+
+    const MCP_CONFIGS = {
+      antigravity: `{
+  "mcpServers": {
+    "graphify": {
+      "command": "python",
+      "args": ["${window.location.protocol === 'file:' ? 'D:/projects/graphify-local-server' : '.'}/mcp/graphify_mcp.py"],
+      "env": {
+        "GRAPHIFY_SERVER_URL": "http://localhost:28848"
+      }
+    }
+  }
+}`,
+      claude: `{
+  "mcpServers": {
+    "graphify": {
+      "command": "python",
+      "args": ["/path/to/graphify-local-server/mcp/graphify_mcp.py"],
+      "env": {
+        "GRAPHIFY_SERVER_URL": "http://localhost:28848"
+      }
+    }
+  }
+}`,
+      cursor: `{
+  "mcpServers": {
+    "graphify": {
+      "command": "python",
+      "args": ["./mcp/graphify_mcp.py"],
+      "env": {
+        "GRAPHIFY_SERVER_URL": "http://localhost:28848"
+      }
+    }
+  }
+}`,
+      cloud: `{
+  "mcpServers": {
+    "graphify": {
+      "command": "python",
+      "args": ["./mcp/graphify_mcp.py"],
+      "env": {
+        "GRAPHIFY_SERVER_URL": "https://your-graphify-server.domain.com",
+        "GRAPHIFY_API_KEY": "YOUR_SECRET_API_KEY"
+      }
+    }
+  }
+}`
+    };
 
     function toggleTheme() {
       const current = document.documentElement.getAttribute("data-theme");
       const next = current === "light" ? "dark" : "light";
       document.documentElement.setAttribute("data-theme", next);
+    }
+
+    function switchVisTab(tab) {
+      activeVisTab = tab;
+      document.querySelectorAll(".vis-tab").forEach(t => t.classList.remove("active"));
+      document.getElementById(`tab-btn-${tab}`).classList.add("active");
+      updateVisUrl();
+    }
+
+    function updateVisUrl() {
+      const iframe = document.getElementById("graph-iframe");
+      const topBtn = document.getElementById("open-visualizer-btn");
+      let base = "/visualizer";
+      if (activeVisTab === "tree") base = "/tree";
+      if (activeVisTab === "callflow") base = "/callflow";
+
+      const url = currentProject ? `${base}?project=${encodeURIComponent(currentProject)}` : base;
+      iframe.src = url;
+      topBtn.href = url;
+    }
+
+    function switchConfigTab(cfg) {
+      activeConfig = cfg;
+      document.querySelectorAll(".cfg-tab").forEach(t => t.classList.remove("active"));
+      event.target.classList.add("active");
+      document.getElementById("mcp-config-display").textContent = MCP_CONFIGS[cfg];
+    }
+
+    function copyConfig() {
+      const text = document.getElementById("mcp-config-display").textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector(".copy-btn");
+        btn.innerHTML = `<i class="fa-solid fa-check"></i> Copied!`;
+        setTimeout(() => { btn.innerHTML = `<i class="fa-solid fa-copy"></i> Copy`; }, 1500);
+      });
+    }
+
+    async function checkHealth() {
+      try {
+        const res = await fetch("/health");
+        if (res.ok) {
+          const h = await res.json();
+          const badge = document.getElementById("security-badge");
+          if (h.security_mode === "cloud") {
+            badge.className = "badge badge-cloud";
+            badge.innerHTML = `<i class="fa-solid fa-lock"></i> Cloud Secured (Token Auth)`;
+          } else {
+            badge.className = "badge badge-success";
+            badge.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Local Dev (Zero Friction)`;
+          }
+        }
+      } catch (err) {
+        console.warn("Health check failed:", err);
+      }
     }
 
     async function loadProjects() {
@@ -330,7 +609,7 @@
           }
           graphs.forEach(g => {
             const opt = document.createElement("option");
-            const displayName = g.name || (g.path ? g.path.split('/').filter(p => p && p !== 'graphify-out' && p !== 'graph.json').pop() : 'Default');
+            const displayName = g.name || (g.path ? g.path.split(/[\\/]/).filter(p => p && p !== 'graphify-out' && p !== 'graph.json').pop() : 'Default');
             opt.value = g.name || g.path;
             opt.textContent = `${displayName} (${g.nodes || 0} nodes)`;
             if (g.is_default || (!currentProject && opt.value)) {
@@ -348,11 +627,7 @@
 
     function onProjectChange(projectName) {
       currentProject = projectName;
-      const iframe = document.getElementById("graph-iframe");
-      const topBtn = document.getElementById("open-visualizer-btn");
-      const url = projectName ? `/visualizer?project=${encodeURIComponent(projectName)}` : "/visualizer";
-      iframe.src = url;
-      topBtn.href = url;
+      updateVisUrl();
       loadStats(projectName);
     }
 
@@ -362,8 +637,8 @@
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
-          document.getElementById("stat-nodes").textContent = data.nodes || 0;
-          document.getElementById("stat-edges").textContent = data.edges || 0;
+          document.getElementById("stat-nodes").textContent = (data.nodes || 0).toLocaleString();
+          document.getElementById("stat-edges").textContent = (data.edges || 0).toLocaleString();
           document.getElementById("stat-communities").textContent = data.communities || 0;
           const conf = data.confidence || {};
           document.getElementById("stat-confidence").textContent = `EXT: ${conf.extracted_pct || 0}% | INF: ${conf.inferred_pct || 0}%`;
@@ -371,6 +646,94 @@
         }
       } catch (err) {
         console.error(err);
+      }
+    }
+
+    async function runBlastRadius() {
+      const sym = document.getElementById("blast-symbol").value.trim();
+      const depth = parseInt(document.getElementById("blast-depth").value) || 3;
+      const out = document.getElementById("blast-result");
+      if (!sym) {
+        out.textContent = "Please enter a symbol name (e.g. GraphifyService, main, parse)";
+        return;
+      }
+      out.textContent = `Analyzing transitive downstream blast radius for '${sym}' (depth ${depth})...`;
+      try {
+        const url = `/api/blast-radius?symbol=${encodeURIComponent(sym)}&max_depth=${depth}${currentProject ? `&project_path=${encodeURIComponent(currentProject)}` : ''}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!res.ok) {
+          out.textContent = `Error: ${data.detail || JSON.stringify(data)}`;
+          return;
+        }
+        let txt = `=== Blast Radius for '${data.target_symbol}' ===\n`;
+        txt += `Direct Dependents:     ${data.direct_dependents_count}\n`;
+        txt += `Total Impacted Nodes:  ${data.impact_count}\n`;
+        txt += `Impacted Source Files: ${data.impacted_files.length}\n`;
+        txt += `Impacted Test Files:   ${data.impacted_tests.length}\n\n`;
+
+        if (data.impacted_tests.length > 0) {
+          txt += `[!] Potentially Broken Tests:\n`;
+          data.impacted_tests.forEach(t => { txt += `  - ${t}\n`; });
+          txt += `\n`;
+        }
+
+        txt += `Impacted Files:\n`;
+        data.impacted_files.forEach(f => { txt += `  - ${f}\n`; });
+        txt += `\nDirect Callers:\n`;
+        (data.direct_dependents || []).forEach(d => {
+          txt += `  <-- ${d.caller} [${d.relation}] (${d.file})\n`;
+        });
+        out.textContent = txt;
+      } catch (e) {
+        out.textContent = "Error: " + e.message;
+      }
+    }
+
+    async function runDeadCode() {
+      const out = document.getElementById("deadcode-result");
+      out.textContent = "Scanning codebase knowledge graph for unreferenced symbols (in-degree 0)...";
+      try {
+        const url = `/api/dead-code${currentProject ? `?project_path=${encodeURIComponent(currentProject)}` : ''}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!res.ok) {
+          out.textContent = `Error: ${data.detail || JSON.stringify(data)}`;
+          return;
+        }
+        let txt = `=== Dead Code & Orphan Candidates (${data.orphan_count} found) ===\n\n`;
+        (data.orphans || []).slice(0, 50).forEach(o => {
+          txt += `- ${o.label} (${o.file_type || 'symbol'})\n`;
+          txt += `  File: ${o.file} ${o.location || ''}\n`;
+        });
+        if (data.orphan_count > 50) {
+          txt += `\n... and ${data.orphan_count - 50} more.`;
+        }
+        out.textContent = txt;
+      } catch (e) {
+        out.textContent = "Error: " + e.message;
+      }
+    }
+
+    async function runCypher() {
+      const q = document.getElementById("cypher-input").value.trim();
+      const out = document.getElementById("cypher-result");
+      if (!q) return;
+      out.textContent = "Executing Cypher against KùzuDB...";
+      try {
+        const res = await fetch("/api/cypher", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: q, project_path: currentProject })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          out.textContent = `Error: ${data.detail || JSON.stringify(data)}`;
+          return;
+        }
+        out.textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        out.textContent = "Error: " + e.message;
       }
     }
 
@@ -394,31 +757,15 @@
       }
     }
 
-    async function runPath() {
-      const source = document.getElementById("path-source").value.trim();
-      const target = document.getElementById("path-target").value.trim();
-      const out = document.getElementById("path-result");
-      if (!source || !target) return;
-      out.textContent = "Finding shortest path...";
-      try {
-        const res = await fetch("/api/shortest-path", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source, target, project_path: currentProject })
-        });
-        const data = await res.json();
-        out.textContent = data.result || JSON.stringify(data, null, 2);
-      } catch (e) {
-        out.textContent = "Error: " + e.message;
-      }
-    }
-
     async function runBuild() {
       const path = document.getElementById("build-path").value.trim();
       const force = document.getElementById("build-force").checked;
       const out = document.getElementById("build-result");
-      if (!path) return;
-      out.textContent = "Starting Graphify indexing... (this may take 15-45s depending on codebase size)";
+      if (!path) {
+        out.textContent = "Please enter an absolute directory path to index.";
+        return;
+      }
+      out.textContent = "Running Graphify AST indexer... (extracting symbols, computing communities, syncing to KùzuDB)";
       try {
         const res = await fetch("/api/build", {
           method: "POST",
@@ -433,6 +780,9 @@
       }
     }
 
+    // Initialize Dashboard
+    document.getElementById("mcp-config-display").textContent = MCP_CONFIGS.antigravity;
+    checkHealth();
     loadProjects();
   </script>
 </body>

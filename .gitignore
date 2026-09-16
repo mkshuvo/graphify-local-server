@@ -26,3 +26,9 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Graphify build outputs & Kuzu databases
+graphify-out/
+kuzu_db/
+*.kuzu
+test_kuzu*

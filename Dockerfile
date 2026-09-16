@@ -17,11 +17,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Python requirements
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir pytest httpx
 
-# Copy server code and static web assets
+# Copy server code, mcp bridge, static assets, and tests
 COPY server /app/server
+COPY mcp /app/mcp
 COPY static /app/static
+COPY tests /app/tests
+COPY run_server.py /app/run_server.py
 
 # Create data directory and workspaces directory
 RUN mkdir -p /app/data /app/workspaces

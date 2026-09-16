@@ -28,6 +28,17 @@ class BuildRequest(BaseModel):
     force: bool = Field(False, description="Force re-indexing even if graph exists")
 
 
+class CypherRequest(BaseModel):
+    query: str = Field(..., description="OpenCypher query to execute")
+    project_path: Optional[str] = Field(None, description="Target project or graph path")
+
+
+class ContextBundleRequest(BaseModel):
+    symbols: List[str] = Field(..., description="List of symbols or concepts to package")
+    token_budget: int = Field(4000, ge=500, le=32000, description="Max token budget")
+    project_path: Optional[str] = Field(None, description="Target project or graph path")
+
+
 def setup_routes(service: GraphifyService) -> APIRouter:
     @router.get("/graphs")
     def list_graphs():
@@ -114,6 +125,72 @@ def setup_routes(service: GraphifyService) -> APIRouter:
                 project_path=req.project_path,
             )
             if "error" in res:
+                raise HTTPException(status_code=404, detail=res["error"])
+            return res
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @router.get("/blast-radius")
+    def blast_radius(
+        symbol: str = Query(..., description="Target symbol/function name"),
+        max_depth: int = Query(3, ge=1, le=6, description="Downstream traversal depth"),
+        project_path: Optional[str] = None,
+    ):
+        try:
+            res = service.blast_radius(symbol=symbol, max_depth=max_depth, project_path=project_path)
+            if "error" in res:
+                raise HTTPException(status_code=404, detail=res["error"])
+            return res
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @router.get("/callflow")
+    def call_flow(
+        symbol: str = Query(..., description="Entrypoint symbol/function name"),
+        max_depth: int = Query(3, ge=1, le=6, description="Call chain depth"),
+        project_path: Optional[str] = None,
+    ):
+        try:
+            res = service.call_flow(symbol=symbol, max_depth=max_depth, project_path=project_path)
+            if "error" in res:
+                raise HTTPException(status_code=404, detail=res["error"])
+            return res
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @router.get("/dead-code")
+    def dead_code(project_path: Optional[str] = None):
+        try:
+            return service.dead_code(project_path=project_path)
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @router.post("/context-bundle")
+    def context_bundle(req: ContextBundleRequest):
+        try:
+            return service.context_bundle(
+                symbols=req.symbols,
+                token_budget=req.token_budget,
+                project_path=req.project_path,
+            )
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @router.post("/cypher")
+    def execute_cypher(req: CypherRequest):
+        try:
+            res = service.execute_cypher(query=req.query, project_path=req.project_path)
+            if "error" in res and "not found" in res["error"].lower():
                 raise HTTPException(status_code=404, detail=res["error"])
             return res
         except FileNotFoundError as e:
