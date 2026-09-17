@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import json
 import logging
 import subprocess
@@ -59,6 +60,14 @@ class GraphifyService:
             workspaces = Path("/app/workspaces")
             p = Path(p_str)
             if not p.exists():
+                # 1. Try stripping drive letter & 'projects' prefix
+                normalized = re.sub(r'^[a-zA-Z]:[\\/](?:projects[\\/])?', '', p_str, flags=re.IGNORECASE)
+                normalized = normalized.replace("\\", "/").strip("/")
+                candidate_rel = workspaces / normalized
+                if candidate_rel.exists():
+                    return candidate_rel
+
+                # 2. Check direct basename match
                 candidate = workspaces / p.name
                 if candidate.exists():
                     return candidate
@@ -76,6 +85,15 @@ class GraphifyService:
             return Path(p_str)
 
     def _get_project_name(self, mapped: Path) -> str:
+        try:
+            workspaces = Path("/app/workspaces")
+            if workspaces in mapped.parents or mapped == workspaces:
+                rel = mapped.relative_to(workspaces)
+                name = str(rel).replace("/", "_").replace("\\", "_")
+                if name and name != ".":
+                    return name
+        except Exception:
+            pass
         return mapped.name or "default"
 
     def _resolve_graph_file(self, project_or_graph_path: Optional[str] = None) -> Optional[Path]:

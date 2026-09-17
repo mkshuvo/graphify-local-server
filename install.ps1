@@ -21,7 +21,8 @@ param(
     [switch]$Start,
     [int]$Port = 28848,
     [string]$Codebase = "",
-    [switch]$SkipGraph
+    [switch]$SkipGraph,
+    [switch]$Docker
 )
 
 $ErrorActionPreference = "Stop"
@@ -144,6 +145,9 @@ if ($SkipGraph) {
 }
 $installArgs += "--port"
 $installArgs += $Port.ToString()
+if ($Docker) {
+    $installArgs += "--docker"
+}
 
 if ($PythonCmd -eq "py -3") {
     & py -3 $installPy @installArgs

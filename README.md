@@ -60,9 +60,47 @@ python install.py --start
 * **macOS / Linux**: Run `./start.sh`
 
 ### Option B: Isolated Docker Container
-```bash
-docker compose up -d --build
-```
+
+1. **Configure your workspace mount**:
+   Copy `.env.example` to `.env` and set `HOST_WORKSPACE_DIR` to your projects directory so Docker can index external codebases:
+   ```bash
+   cp .env.example .env
+   # Edit .env:
+   # HOST_WORKSPACE_DIR=D:/projects      (Windows)
+   # HOST_WORKSPACE_DIR=/path/to/projects (macOS / Linux)
+   ```
+
+2. **Start the Docker container**:
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. **Auto-configure MCP Assistants for Docker**:
+   Run the setup with the `--docker` flag to register the Docker-backed MCP provider in your AI coding tools:
+   * **Windows**: `.\install.ps1 -Docker`
+   * **macOS / Linux**: `./install.sh --docker`
+   * **Universal**: `python install.py --docker`
+
+   *(Or manually configure your assistant MCP json to use Docker directly without needing local Python:)*
+   ```json
+   {
+     "mcpServers": {
+       "graphify": {
+         "command": "docker",
+         "args": [
+           "exec",
+           "-i",
+           "graphify-local-server",
+           "python",
+           "/app/mcp/graphify_mcp.py"
+         ],
+         "env": {
+           "GRAPHIFY_SERVER_URL": "http://localhost:28848"
+         }
+       }
+     }
+   }
+   ```
 
 Access the Web Management Dashboard & Studio at [**http://localhost:28848**](http://localhost:28848).
 * 🕸️ **2D Interactive Force Visualizer**: `http://localhost:28848/visualizer`

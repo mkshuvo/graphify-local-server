@@ -156,20 +156,33 @@ def update_json_config(path: Path, server_config: dict) -> bool:
         return False
 
 
-def configure_assistants():
+def configure_assistants(use_docker: bool = False):
     """Detects and registers graphify MCP in Antigravity, Claude, Cursor, and Windsurf."""
-    python_bin, _ = get_python_and_scripts()
-    mcp_script = ROOT / "mcp" / "graphify_mcp.py"
-
-    py_exec = str(python_bin) if python_bin.exists() else sys.executable
-
-    server_entry = {
-        "command": py_exec,
-        "args": [str(mcp_script)],
-        "env": {
-            "GRAPHIFY_SERVER_URL": "http://localhost:28848"
+    if use_docker:
+        server_entry = {
+            "command": "docker",
+            "args": [
+                "exec",
+                "-i",
+                "graphify-local-server",
+                "python",
+                "/app/mcp/graphify_mcp.py"
+            ],
+            "env": {
+                "GRAPHIFY_SERVER_URL": "http://localhost:28848"
+            }
         }
-    }
+    else:
+        python_bin, _ = get_python_and_scripts()
+        mcp_script = ROOT / "mcp" / "graphify_mcp.py"
+        py_exec = str(python_bin) if python_bin.exists() else sys.executable
+        server_entry = {
+            "command": py_exec,
+            "args": [str(mcp_script)],
+            "env": {
+                "GRAPHIFY_SERVER_URL": "http://localhost:28848"
+            }
+        }
 
     configured = []
 
@@ -279,6 +292,7 @@ def main():
     parser.add_argument("--skip-graph", action="store_true", help="Skip starter graph indexing")
     parser.add_argument("--start", "-s", action="store_true", help="Start the server immediately after installation")
     parser.add_argument("--port", "-p", type=int, default=28848, help="Server port (default: 28848)")
+    parser.add_argument("--docker", "-d", action="store_true", help="Configure MCP assistants to execute directly through Docker container")
     args = parser.parse_args()
 
     print("=" * 68)
@@ -291,7 +305,7 @@ def main():
 
     ensure_environment()
     generate_launchers()
-    configure_assistants()
+    configure_assistants(use_docker=args.docker)
 
     if not args.skip_graph:
         ensure_starter_graph(args.codebase)
